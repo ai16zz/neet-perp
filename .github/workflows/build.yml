@@ -11,23 +11,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust stable
+      - name: Install Rust 1.79
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.79.0"
 
-      - name: Cache cargo
+      - name: Cache cargo registry
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles("**/Cargo.lock") }}
+          key: cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install Solana CLI
+      - name: Install Solana CLI v1.18.26
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
@@ -53,4 +51,3 @@ jobs:
           name: program-binaries
           path: target/deploy/*.so
           if-no-files-found: warn
-
