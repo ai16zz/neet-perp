@@ -19,3 +19,9 @@ codegen-units = 1
 opt-level = 3
 incremental = false
 codegen-units = 1
+
+# Pin proc-macro2 to 1.0.80 — source_file() was removed in 1.0.81.
+# anchor-syn 0.30.1 calls Span::source_file() for IDL generation.
+# Combined with RUSTFLAGS="--cfg procmacro2_semver_exempt" in CI.
+[patch.crates-io]
+proc-macro2 = { git = "https://github.com/dtolnay/proc-macro2.git", tag = "1.0.80" }
