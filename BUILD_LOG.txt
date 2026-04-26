@@ -1,0 +1,2 @@
+bash: anchor: command not found
+BUILD_EXIT:0
