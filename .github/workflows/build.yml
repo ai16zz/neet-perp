@@ -9,8 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust 1.79
-        uses: dtolnay/rust-toolchain@1.79.0
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -19,11 +19,11 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: cargo-1.79-blake3patch-${{ hashFiles('**/Cargo.toml') }}
+          key: cargo-stable-solana3-${{ hashFiles('**/Cargo.toml') }}
 
-      - name: Install Solana CLI v1.18.26 (Anza)
+      - name: Install Solana CLI v3.1.12 (Agave - platform-tools v1.52, Rust 1.89)
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.26/install)"
+          sh -c "$(curl -sSfL https://release.anza.xyz/v3.1.12/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           $HOME/.local/share/solana/install/active_release/bin/solana --version
 
@@ -41,7 +41,6 @@ jobs:
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
           set -o pipefail
           anchor build 2>&1 | tee build.log
-          echo "Exit code: $?"
 
       - name: Show compile errors
         if: always()
