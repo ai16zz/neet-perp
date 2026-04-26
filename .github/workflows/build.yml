@@ -8,8 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      SOLANA_PATH: /home/runner/.local/share/solana/install/active_release/bin
     steps:
       - uses: actions/checkout@v4
 
@@ -30,22 +28,40 @@ jobs:
       - name: Install Solana CLI v1.18.26
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
-          ls $HOME/.local/share/solana/install/active_release/bin/ | head -10
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          solana --version
+          ls $HOME/.local/share/solana/install/active_release/bin/ | grep -E "sbf|bpf"
+
+      - name: Install platform-tools (BPF compiler)
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          cargo-build-sbf --version 2>/dev/null || true
+          solana-install list || true
 
       - name: Install Anchor CLI v0.30.1
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked --force
+          anchor --version
+
+      - name: Verify PATH and tools
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          echo "PATH=$PATH"
+          which cargo-build-sbf && cargo-build-sbf --version || echo "cargo-build-sbf NOT in PATH"
+          ls $HOME/.local/share/solana/install/active_release/bin/ | head -20
 
       - name: anchor build
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          echo "Using PATH: $PATH"
           anchor build 2>&1 | tee build.log
-          echo "BUILD_EXIT:${PIPESTATUS[0]}"
+          echo "Build exit: $?"
 
       - name: Show build errors if any
         if: always()
-        run: cat build.log | grep -E "error|warning|BUILD_EXIT" | tail -50 || true
+        run: cat build.log | grep -E "^error|Finished|warning\[" | head -60 || true
 
       - name: Upload build log
         if: always()
