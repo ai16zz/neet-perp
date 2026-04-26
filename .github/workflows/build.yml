@@ -27,17 +27,12 @@ jobs:
 
       - name: Install Solana CLI v1.18.26
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          solana --version
-          ls $HOME/.local/share/solana/install/active_release/bin/ | grep -E "sbf|bpf"
-
-      - name: Install platform-tools (BPF compiler)
-        run: |
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          cargo-build-sbf --version 2>/dev/null || true
-          solana-install list || true
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)" || true
+          SOLANA_BIN="$HOME/.local/share/solana/install/active_release/bin"
+          echo "$SOLANA_BIN" >> $GITHUB_PATH
+          "$SOLANA_BIN/solana" --version
+          echo "Solana bin contents:"
+          ls "$SOLANA_BIN/" | grep -iE "sbf|bpf|cargo" || echo "(no sbf/bpf/cargo tools found in bin)"
 
       - name: Install Anchor CLI v0.30.1
         run: |
@@ -45,23 +40,12 @@ jobs:
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked --force
           anchor --version
 
-      - name: Verify PATH and tools
-        run: |
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          echo "PATH=$PATH"
-          which cargo-build-sbf && cargo-build-sbf --version || echo "cargo-build-sbf NOT in PATH"
-          ls $HOME/.local/share/solana/install/active_release/bin/ | head -20
-
       - name: anchor build
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          echo "Using PATH: $PATH"
-          anchor build 2>&1 | tee build.log
-          echo "Build exit: $?"
-
-      - name: Show build errors if any
-        if: always()
-        run: cat build.log | grep -E "^error|Finished|warning\[" | head -60 || true
+          which cargo-build-sbf && echo "cargo-build-sbf found" || echo "cargo-build-sbf NOT FOUND"
+          anchor build 2>&1 | tee build.log || true
+          tail -20 build.log
 
       - name: Upload build log
         if: always()
