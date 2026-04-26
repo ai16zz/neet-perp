@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust stable (1.85+)
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
@@ -23,7 +23,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-stable-v2-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install Solana CLI v1.18.26 (Anza)
         run: |
@@ -31,20 +31,22 @@ jobs:
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           $HOME/.local/share/solana/install/active_release/bin/solana --version
 
-      - name: Install Anchor CLI v0.30.1
+      - name: Install Anchor CLI v0.30.1 (without --locked to get compat deps)
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked --force
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --force
           anchor --version
 
       - name: anchor build
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
           anchor build 2>&1 | tee build.log
+          echo "--- last 10 lines ---"
+          tail -10 build.log
 
-      - name: Show errors
+      - name: Show compile errors
         if: always()
-        run: grep -E "^error" build.log | head -30 || echo "No errors found"
+        run: grep -E "^error" build.log | head -20 || echo "No errors"
 
       - name: Upload build log
         if: always()
