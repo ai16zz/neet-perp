@@ -25,14 +25,13 @@ jobs:
             ~/.cargo/git/db/
           key: cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install Solana CLI v1.18.26
+      - name: Install Solana CLI v1.18.26 (Anza)
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)" || true
+          sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.26/install)"
           SOLANA_BIN="$HOME/.local/share/solana/install/active_release/bin"
           echo "$SOLANA_BIN" >> $GITHUB_PATH
           "$SOLANA_BIN/solana" --version
-          echo "Solana bin contents:"
-          ls "$SOLANA_BIN/" | grep -iE "sbf|bpf|cargo" || echo "(no sbf/bpf/cargo tools found in bin)"
+          ls "$SOLANA_BIN/" | grep -iE "sbf|bpf|cargo" || echo "(no sbf tools in this listing)"
 
       - name: Install Anchor CLI v0.30.1
         run: |
@@ -43,9 +42,9 @@ jobs:
       - name: anchor build
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          which cargo-build-sbf && echo "cargo-build-sbf found" || echo "cargo-build-sbf NOT FOUND"
-          anchor build 2>&1 | tee build.log || true
-          tail -20 build.log
+          which cargo-build-sbf && echo "cargo-build-sbf found" || echo "NOT FOUND"
+          anchor build 2>&1 | tee build.log
+          tail -10 build.log
 
       - name: Upload build log
         if: always()
